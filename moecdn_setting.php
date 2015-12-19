@@ -46,11 +46,12 @@ function plugin_setting_view() {
 			</tr>
 			</tbody>
 		</table>
-
+        <br/>
 		<p class="submit">
 			<input type="submit" name="submit" id="submit" class="btn btn-primary" value="保存更改">
 		</p>
 	</form>
+    <br/>如果插件正常工作且你已经以管理员身份登陆，你将可以在网页的源代码中看到 "Thank you for using MoeCDN!"
 <?php
 }
 function plugin_setting() {

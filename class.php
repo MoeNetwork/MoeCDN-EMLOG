@@ -3,7 +3,7 @@
 
 class MoeCDN {
     public static $options = array(
-        'gravatar'    => '0',
+        'gravatar'    => '1',
         'googleapis'  => '1',
         'worg'        => '1'
     );
@@ -46,35 +46,26 @@ class MoeCDN {
         option::updateOption('moecdn_' . $n , $v);
     }
 
-    protected function hook() {
-        addAction('admin_init', array('MoeCDN', 'options_init'));
+    public function hook() {
         addAction('adm_siderbar_ext', array('MoeCDN', 'options_menu'));
-        add_filter('plugin_action_links_' . plugin_basename(__FILE__), array('MoeCDN', 'action_links'));
-
-        addAction('init', array('MoeCDN', 'buffer_start'), 1);
-        if (is_admin()) {
-            addAction('in_admin_header', array('MoeCDN', 'buffer_end'), 99999);
-            add_filter('get_avatar', array('MoeCDN', 'replace'));
-            addAction('in_admin_footer', array('MoeCDN', 'buffer_start'), 1);
-        } else {
-            addAction('index_head', array('MoeCDN', 'buffer_end'), 99999);
-            add_filter('get_avatar', array('MoeCDN', 'replace'));
-            addAction('wp_footer', array('MoeCDN', 'buffer_start'), 1);
-        }
-        addAction('shutdown', array('MoeCDN', 'buffer_end'), 99999);
+        addAction('index_head', array('MoeCDN', 'bufferStart'));
+        addAction('index_footer', array('MoeCDN', 'bufferEnd'));
+        addAction('adm_head', array('MoeCDN', 'bufferStart'));
+        addAction('adm_footer', array('MoeCDN', 'bufferEnd'));
     }
 
     // 缓冲替换输出
-    public static function buffer_start() {
+    public static function bufferStart() {
         ob_start(array('MoeCDN', 'replace'));
     }
-    public static function buffer_end() {
+    public static function bufferEnd() {
         ob_end_flush();
     }
+
     // 替换内容
     public static function replace($content) {
         if (self::$options['gravatar']) {
-            $content = str_replace(array("//gravatar.com", "//www.gravatar.com", "//0.gravatar.com", "//1.gravatar.com", "//2.gravatar.com"), "//gravatar.moefont.com", $content);
+            $content = str_replace(array("//gravatar.com", "//www.gravatar.com", "//0.gravatar.com", "//1.gravatar.com", "//2.gravatar.com", "cn.gravatar.com"), "//gravatar.moefont.com", $content);
             $content = str_replace(array("//secure.gravatar.com"), "//gravatar-ssl.moefont.com", $content);
         }
 
@@ -92,51 +83,13 @@ class MoeCDN {
             $content = str_replace(array("//s0.wp.com", "//s1.wp.com"), "//cdn.moefont.com/wpcom", $content);
         }
 
+        if(ROLE == ROLE_ADMIN) {
+            $content .= '<!--Thank you for using MoeCDN! (This message is only visiable for admin)-->';
+        }
         return $content;
     }
 
-    //
-
-    // 设置页面
-    public static function action_links($links) {
-        $links[] = '<a href="'. esc_url(get_admin_url(null, 'options-general.php?page=moecdn')) .'">' . __('Settings') . '</a>';
-        $links[] = '<a href="http://cdn.moefont.com" target="_blank">支持</a>';
-        return $links;
-    }
-    protected static function reset_options() {
-        self::$options = array(
-            'gravatar' => true,
-            'googleapis' => true,
-            'worg' => true,
-            'wpcom' => true
-        );
-        update_option('moecdn_options', $options);
-    }
-    protected static function save_options() {
-        self::$options = array(
-            'gravatar' => $_POST['gravatar'],
-            'googleapis' => $_POST['googleapis'],
-            'worg' => $_POST['worg'],
-            'wpcom' => $_POST['wpcom']);
-        update_option('moecdn_options', $options);
-    }
-    public static function options_init() {
-        if (isset($_POST['submit'])) {
-            self::save_options();
-            add_settings_error('moecdn_options', 'moecdn_options-updated', __('Settings saved.'), 'updated');
-        } elseif (isset($_POST['reset'])) {
-            self::reset_options();
-            add_settings_error('moecdn_options', 'moecdn_options-reseted', __('Settings reseted.'), 'updated');
-        }
-    }
     public static function options_menu() {
-        add_options_page('MoeCDN 设置', 'MoeCDN', 'manage_options', 'moecdn', array('MoeCDN', 'options_display'));
-    }
-    public static function options_display() {
-        ?>
-
-
-
-        <?php
+        echo '<div class="sidebarsubmenu" id="moecdn"><a href="./plugin.php?plugin=moecdn">MoeCDN</a></div>';
     }
 }

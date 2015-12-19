@@ -12,3 +12,4 @@ Author URL: http://zhizhe8.net/
 
 require 'class.php';
 $MoeCDN = new MoeCDN();
+$MoeCDN->hook();
