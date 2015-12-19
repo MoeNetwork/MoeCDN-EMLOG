@@ -10,3 +10,5 @@ Author URL: http://zhizhe8.net/
 
 !defined('EMLOG_ROOT') && exit('access deined!');
 
+require 'class.php';
+$MoeCDN = new MoeCDN();

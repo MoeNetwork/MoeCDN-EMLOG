@@ -2,31 +2,66 @@
 !defined('EMLOG_ROOT') && exit('access deined!');
 
 class MoeCDN {
-    protected static $options;
+    public static $options = array(
+        'gravatar'    => '0',
+        'googleapis'  => '1',
+        'worg'        => '1'
+    );
 
     public function __construct() {
-        self::$options = get_option('moecdn_options');
+        self::$options = array_merge(self::$options, $this->getAllOpt());
         if (!is_array(self::$options))
             self::reset_options();
-        self::hook();
     }
 
-    protected static function hook() {
-        add_action('admin_init', array('MoeCDN', 'options_init'));
-        add_action('admin_menu', array('MoeCDN', 'options_menu'));
+    public static function checked($val) {
+        if(self::$options[$val] == '1') {
+            echo ' checked="checked"';
+        }
+    }
+
+    protected function getAllOpt() {
+        $r = array(
+            'gravatar'    => self::get('gravatar'),
+            'googleapis'  => self::get('googleapis'),
+            'worg'        => self::get('worg')
+        );
+        foreach($r as $key => $test) {
+            if(is_null($test)) {
+                $m = Database::getInstance();
+                $m->query('INSERT INTO `'.DB_PREFIX."options` (`option_name`,`option_value`) VALUES ('moecdn_{$key}','".self::$options[$key]."');");
+                $c = Cache::getInstance();
+                $c->updateCache('options');
+                unset($r[$key]);
+            }
+        }
+        return $r;
+    }
+
+    public static function get($v) {
+        return Option::get('moecdn_' . $v);
+    }
+
+    public static function set($n , $v) {
+        option::updateOption('moecdn_' . $n , $v);
+    }
+
+    protected function hook() {
+        addAction('admin_init', array('MoeCDN', 'options_init'));
+        addAction('adm_siderbar_ext', array('MoeCDN', 'options_menu'));
         add_filter('plugin_action_links_' . plugin_basename(__FILE__), array('MoeCDN', 'action_links'));
 
-        add_action('init', array('MoeCDN', 'buffer_start'), 1);
+        addAction('init', array('MoeCDN', 'buffer_start'), 1);
         if (is_admin()) {
-            add_action('in_admin_header', array('MoeCDN', 'buffer_end'), 99999);
+            addAction('in_admin_header', array('MoeCDN', 'buffer_end'), 99999);
             add_filter('get_avatar', array('MoeCDN', 'replace'));
-            add_action('in_admin_footer', array('MoeCDN', 'buffer_start'), 1);
+            addAction('in_admin_footer', array('MoeCDN', 'buffer_start'), 1);
         } else {
-            add_action('wp_head', array('MoeCDN', 'buffer_end'), 99999);
+            addAction('index_head', array('MoeCDN', 'buffer_end'), 99999);
             add_filter('get_avatar', array('MoeCDN', 'replace'));
-            add_action('wp_footer', array('MoeCDN', 'buffer_start'), 1);
+            addAction('wp_footer', array('MoeCDN', 'buffer_start'), 1);
         }
-        add_action('shutdown', array('MoeCDN', 'buffer_end'), 99999);
+        addAction('shutdown', array('MoeCDN', 'buffer_end'), 99999);
     }
 
     // 缓冲替换输出
@@ -100,49 +135,7 @@ class MoeCDN {
     public static function options_display() {
         ?>
 
-        <div class="wrap">
-        <h2>MoeCDN 设置</h2>
 
-        <form method="post" name="moecdn" id="moecdn">
-
-            <table class="form-table">
-                <tbody>
-                <tr><th scope="row">Gravatar</th>
-                    <td><label for="gravatar">
-                            <input name="gravatar" type="hidden" value="0" />
-                            <input name="gravatar" type="checkbox" id="gravatar" value="1" <?php checked(self::$options['gravatar']); ?>>
-                            替换 Gravatar 服务器
-                        </label></td>
-                </tr>
-                <tr><th scope="row">Google</th>
-                    <td><label for="googleapis">
-                            <input name="googleapis" type="hidden" value="0" />
-                            <input name="googleapis" type="checkbox" id="googleapis" value="1" <?php checked(self::$options['googleapis']); ?>>
-                            替换 Google Fonts 和 Google AJAX CDN 服务器
-                        </label></td>
-                </tr>
-                <tr><th scope="row">WordPress</th>
-                    <td><label for="worg">
-                            <input name="worg" type="hidden" value="0" />
-                            <input name="worg" type="checkbox" id="worg" value="1" <?php checked(self::$options['worg']); ?>>
-                            替换 WordPress Emoji 图片服务器
-                        </label></td>
-                </tr>
-                <tr><th scope="row">WP.COM</th>
-                    <td><label for="wpcom">
-                            <input name="wpcom" type="hidden" value="0" />
-                            <input name="wpcom" type="checkbox" id="wpcom" value="1" <?php checked(self::$options['wpcom']); ?>>
-                            替换 Jetpack 等 WordPress.com 静态资源服务器
-                        </label></td>
-                </tr>
-                </tbody>
-            </table>
-
-            <p class="submit">
-                <input type="submit" name="submit" id="submit" class="button button-primary" value="保存更改">
-                &nbsp;<input name="reset" type="submit" class="button button-secondary" value="重置设置" onclick="return confirm('你确定要重置所有的设置吗？');">
-            </p>
-        </form>
 
         <?php
     }
