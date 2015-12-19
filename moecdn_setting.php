@@ -52,6 +52,11 @@ function plugin_setting_view() {
 		</p>
 	</form>
     <br/>如果插件正常工作且你已经以管理员身份登陆，你将可以在网页的源代码中看到 "Thank you for using MoeCDN!"
+    <br/>MoeCDN // 作者：
+    <a href="http://zhizhe8.net/" target="_blank">Kenvix</a> +
+    <a href="http://i.qaq.cat/" target="_blank">Balthild</a>
+    //
+    <a href="https://github.com/MoeNetwork/MoeCDN-EMLOG" target="_blank">Github</a>
 <?php
 }
 function plugin_setting() {
